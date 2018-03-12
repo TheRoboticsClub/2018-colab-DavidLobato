@@ -1,0 +1,3 @@
+A simple demo project for UP5K boards that blinks a led at 2Hz. 
+It shows the most simple way to use the RGBA driver included on UP5K platform.
+
