@@ -12,12 +12,12 @@ module spi_led(
 wire spi_done;
 wire [7:0] spi_dout;
 reg [7:0] dout;
-reg rst = 1'b1;
+//reg rst = 1'b1;
 //reg [7:0] din;
 
 spi_slave SPI1 (
   .clk(clk),
-  .rst(rst),
+  .rst(1'b0),
   .ss(SS),
   .mosi(MOSI),
   .miso(MISO),
@@ -39,9 +39,9 @@ SB_RGBA_DRV RGBA_DRIVER (
 );
 
 always @(posedge clk) begin
-  if (rst) begin
-    rst = 1'b0;
-  end
+  // if (rst) begin
+  //   rst <= 1'b0;
+  // end
   if (spi_done) begin
     dout <= spi_dout;
   end
