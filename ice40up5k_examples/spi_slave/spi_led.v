@@ -3,9 +3,9 @@ module spi_led(
   output wire RGB0,
   output wire RGB1,
   output wire RGB2,
-  output wire SS,
-  output wire SCK,
-  output wire MOSI, 
+  input wire SS,
+  input wire SCK,
+  input wire MOSI, 
   output wire MISO
 );
 
@@ -23,16 +23,16 @@ spi_slave SPI1 (
   .miso(MISO),
   .sck(SCK),
   .done(spi_done),
-  .din(8'b10101010),
+  .din(8'b0),
   .dout(spi_dout)
 );
 
 SB_RGBA_DRV RGBA_DRIVER (
   .CURREN(1'b1),
   .RGBLEDEN(1'b1),
-  .RGB0PWM(dout[2]),
+  .RGB0PWM(dout[0]),
   .RGB1PWM(dout[1]),
-  .RGB2PWM(dout[0]),
+  .RGB2PWM(dout[2]),
   .RGB0(RGB0),
   .RGB1(RGB1),
   .RGB2(RGB2)

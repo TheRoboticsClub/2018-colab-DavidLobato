@@ -1,28 +1,39 @@
-module spi_slave_tb();
+(* blackbox *)
+module SB_RGBA_DRV(
+        input CURREN,
+        input RGBLEDEN,
+        input RGB0PWM,
+        input RGB1PWM,
+        input RGB2PWM,
+        output RGB0,
+        output RGB1,
+        output RGB2
+);
+parameter CURRENT_MODE = "0b0";
+parameter RGB0_CURRENT = "0b000000";
+parameter RGB1_CURRENT = "0b000000";
+parameter RGB2_CURRENT = "0b000000";
+endmodule
+
+module spi_led_tb();
 
 reg clk;
-reg rst;
 reg ss;
 reg mosi;
 wire miso;
 reg sck;
-wire done;
-wire [7:0] receivedData;
 reg[7:0] misoData;
-reg[7:0] dataToSend;
 reg[7:0] expectedData;
 
-
-spi_slave dut (
+spi_led dut (
   .clk(clk),
-  .rst(rst),
-  .ss(ss),
-  .mosi(mosi),
-  .miso(miso),
-  .sck(sck),
-  .done(done),
-  .din(dataToSend),
-  .dout(receivedData)
+  .RGB0(),
+  .RGB1(),
+  .RGB2(),
+  .SS(ss),
+  .SCK(sck),
+  .MOSI(mosi),
+  .MISO(miso)
 );
 
 // clock generator
@@ -48,8 +59,8 @@ endtask
 
 
 initial begin
-    $dumpfile("spi_slave_tb.vcd");
-    $dumpvars(0, spi_slave_tb);
+    $dumpfile("spi_led_tb.vcd");
+    $dumpvars(0, spi_led_tb);
 
     clk = 1'b0;
     sck = 1'b0;
@@ -57,24 +68,12 @@ initial begin
     ss = 1'b1;
     misoData = 8'h00;
 
-    dataToSend = 8'b10101010;//slave output
-
     expectedData = 8'b11111111;
     #10 send_data(8'b11111111, misoData);
     $display("assertEquals(misoData,0x%h,0x%h)", 8'b10101010, misoData);
     
-    dataToSend = 8'b01010101;//slave output
-    expectedData = 8'b00000000;
-    #10 send_data(8'b00000000, misoData);
-    $display("assertEquals(misoData,0x%h,0x%h)", 8'b01010101, misoData);
-
     #100 $display("END");
     $finish;
-end
-
-always @(*) begin
-    if(done)
-        $display("assertEquals(receivedData,%b,%b)", receivedData, expectedData);
 end
 
 endmodule
