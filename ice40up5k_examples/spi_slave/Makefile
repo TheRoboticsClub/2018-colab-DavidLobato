@@ -9,7 +9,16 @@ ICEPACK = icepack
 ICETIME = icetime
 ICEPROG = iceprog
 
-all: $(PROJ).bin
+CXX ?= clang++
+CC ?= clang
+PKG_CONFIG ?= pkg-config
+CFLAGS = -g
+LDLIBS = 
+LDLIBS += $(shell $(PKG_CONFIG) --libs libftdi)
+CFLAGS += $(shell $(PKG_CONFIG) --cflags libftdi)
+
+
+all: $(PROJ).bin spi_send_command
 
 %.blif: %.v $(DEPS)
 	yosys -p 'synth_ice40 -blif $@' $^
@@ -23,7 +32,7 @@ all: $(PROJ).bin
 %.rpt: %.asc
 	$(ICETIME) -d $(DEVICE) -mtr $@ $<
 
-%_tb: %_tb.v %.v
+%_tb: %_tb.v %.v $(DEPS)
 	iverilog -o $@ $^
 
 %_tb.vcd: %_tb
@@ -36,8 +45,11 @@ sudo-prog: $(PROJ).bin
 	@echo 'Executing prog as root!!!'
 	sudo $(ICEPROG) -S $<
 
+spi_send_command: spi_send_command.o
+	$(CC) -o $@ $(LDFLAGS) $^ $(LDLIBS)
+
 clean:
-	rm -f $(PROJ).blif $(PROJ).asc $(PROJ).rpt $(PROJ).bin
+	rm -f $(PROJ).blif $(PROJ).asc $(PROJ).rpt $(PROJ).bin $(PROJ)_tb $(PROJ)_tb.vcd spi_send_command
 
 .SECONDARY:
 .PHONY: all prog clean
