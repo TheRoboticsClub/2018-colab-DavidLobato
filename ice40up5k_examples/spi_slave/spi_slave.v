@@ -1,3 +1,7 @@
+// Source from mojo-base-project
+// https://github.com/embmicro/mojo-base-project/blob/master/src/spi_slave.v
+// MIT Licence
+
 module spi_slave(
     input clk,
     input rst,

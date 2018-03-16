@@ -10,3 +10,4 @@
 *.tmp/
 *.exp
 *.vlog
+spi_send_command

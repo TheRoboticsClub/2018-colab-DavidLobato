@@ -1,1 +1,11 @@
 Simple project to build a SPI slave on UP5K platform.
+
+The spi slave reads data bytes sent to it and sets the RGB leds status according to: xxxxxrgb
+The included spi_send_command program can send bytes (hex encoded) to the spi slave through USB.
+For instance:
+
+$> ./spi_send_command 0x04
+
+will set the red led on.
+
+On current implementation a soft spi core is used rather than the included hardware spi core.
