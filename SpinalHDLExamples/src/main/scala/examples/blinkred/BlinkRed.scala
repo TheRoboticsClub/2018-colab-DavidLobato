@@ -38,4 +38,13 @@ case class BlinkRed(timerWidth: Int = 23) extends Component{
   rgbaDriver.io.RGB0 <> io.rgb0
   rgbaDriver.io.RGB1 <> io.rgb1
   rgbaDriver.io.RGB2 <> io.rgb2
+
+  noIoPrefix()
+}
+
+object BlinkRed {
+  def main(args: Array[String]) {
+    val outRtlDir = if (!args.isEmpty) args(0) else  "rtl"
+    SpinalConfig(targetDirectory = outRtlDir).generateVerilog(BlinkRed())
+  }
 }

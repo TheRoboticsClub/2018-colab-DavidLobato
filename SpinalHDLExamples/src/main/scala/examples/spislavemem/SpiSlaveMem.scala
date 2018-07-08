@@ -3,9 +3,10 @@ package examples.spislavemem
 import spinal.core._
 import spinal.lib._
 import spinal.lib.com.spi.{SpiSlave, SpiSlaveCtrl, SpiSlaveCtrlGenerics}
+import spinal.lib.io.InOutWrapper
 
 // mode: 0 => [cpol = 0, cpha = 0], 1 => [cpol = 0, cpha = 1], 2 => [cpol = 1, cpha = 0], 3 => [cpol = 1, cpha = 1]
-case class SpiSlaveMemConfig(dataWidth : Int = 8, mode: Int = 0, memWordCount: Int = 512) {
+case class SpiSlaveMemConfig(dataWidth : Int = 8, mode: Int = 0, memWordCount: Int) {
   val addressWidth = log2Up(memWordCount)
   assert(addressWidth < (dataWidth*2), "max memWordCount=32768")
   assert(isPow2(memWordCount), "memWordCount must be a power of 2")
@@ -121,4 +122,12 @@ case class SpiSlaveMem(config: SpiSlaveMemConfig) extends Component {
   io.spi <> core.spiCtrl.io.spi
 
   noIoPrefix()
+}
+
+object SpiSlaveMem {
+  def main(args: Array[String]) {
+    val outRtlDir = if (!args.isEmpty) args(0) else  "rtl"
+    SpinalConfig(targetDirectory = outRtlDir)
+      .generateVerilog(InOutWrapper(SpiSlaveMem(SpiSlaveMemConfig(memWordCount = 1024))))
+  }
 }

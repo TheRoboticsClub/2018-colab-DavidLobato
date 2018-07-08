@@ -3,6 +3,7 @@ package examples.spislavedevice
 import spinal.core._
 import spinal.lib._
 import spinal.lib.com.spi.{SpiSlave, SpiSlaveCtrl, SpiSlaveCtrlGenerics}
+import spinal.lib.io.InOutWrapper
 
 // mode: 0 => [cpol = 0, cpha = 0], 1 => [cpol = 0, cpha = 1], 2 => [cpol = 1, cpha = 0], 3 => [cpol = 1, cpha = 1]
 case class SpiSlaveDeviceConfig(dataWidth : Int = 8, mode: Int = 0)
@@ -37,4 +38,12 @@ case class SpiSlaveDevice(config: SpiSlaveDeviceConfig) extends Component {
   io.out2 := coreCtrl.outState(2)
 
   io.spi <> coreCtrl.spiCtrl.io.spi
+}
+
+object SpiSlaveDevice {
+  def main(args: Array[String]) {
+    val outRtlDir = if (!args.isEmpty) args(0) else  "rtl"
+    SpinalConfig(targetDirectory = outRtlDir)
+      .generateVerilog(InOutWrapper(SpiSlaveDevice(SpiSlaveDeviceConfig())))
+  }
 }

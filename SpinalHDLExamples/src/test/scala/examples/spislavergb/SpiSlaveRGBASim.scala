@@ -1,8 +1,8 @@
 package examples.spislavergb
 
 import spinal.core._
-import spinal.sim._
 import spinal.core.sim._
+import spinal.sim._
 
 object SpiSlaveRGBASim {
   def main(args: Array[String]) {

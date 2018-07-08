@@ -1,8 +1,8 @@
 package examples.spislavemem
 
 import spinal.core._
-import spinal.sim._
 import spinal.core.sim._
+import spinal.sim._
 
 object SpiSlaveMemSim {
   def main(args: Array[String]) {
