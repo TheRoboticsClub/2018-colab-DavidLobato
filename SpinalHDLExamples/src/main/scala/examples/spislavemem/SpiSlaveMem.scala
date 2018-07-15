@@ -19,7 +19,6 @@ object SpiSlaveMemState extends SpinalEnum {
 case class SpiSlaveMem(config: SpiSlaveMemConfig) extends Component {
   val io = new Bundle{
     val clk    = in Bool
-    //val reset = in Bool
 
     val spi = master(SpiSlave())
   }
@@ -40,9 +39,6 @@ case class SpiSlaveMem(config: SpiSlaveMemConfig) extends Component {
       resetCounter := resetCounter + 1
       coreResetUnbuffered := True
     }
-//    when(BufferCC(io.reset)){
-//      resetCounter := 0
-//    }
 
     val coreReset = RegNext(coreResetUnbuffered)
   }

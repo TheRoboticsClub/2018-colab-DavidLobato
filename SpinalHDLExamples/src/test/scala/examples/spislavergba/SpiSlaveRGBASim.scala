@@ -1,4 +1,4 @@
-package examples.spislavergb
+package examples.spislavergba
 
 import spinal.core._
 import spinal.core.sim._
@@ -30,13 +30,13 @@ object SpiSlaveRGBASim {
         }
       }
 
-      dut.clockDomain.forkStimulus(period = 10)
+      dut.resetCtrlClockDomain.forkStimulus(period = 10)
 
       dut.io.spi.ss #= true
       dut.io.spi.sclk #= false
       dut.io.spi.mosi #= false
 
-      dut.clockDomain.waitSampling(10)
+      dut.resetCtrlClockDomain.waitSampling(100) //reset takes 64 cycles
 
       dut.io.spi.ss #= false
 

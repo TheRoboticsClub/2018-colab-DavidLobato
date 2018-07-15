@@ -1,4 +1,4 @@
-package examples.spislavergb
+package examples.spislavergba
 
 import examples.sbrgbadrv.{SB_RGBA_DRV, SB_RGBA_DRV_Config}
 import spinal.core._
@@ -11,11 +11,38 @@ case class SpiSlaveRGBAConfig(dataWidth : Int = 8, mode: Int = 0)
 
 case class SpiSlaveRGBA(config: SpiSlaveRGBAConfig) extends Component {
   val io = new Bundle{
+    val clk    = in Bool
+
     val spi = master(SpiSlave())
 
     //Peripherals IO
     val rgb0,rgb1,rgb2 = out Bool()
   }
+
+  val resetCtrlClockDomain = ClockDomain(
+    clock = io.clk,
+    config = ClockDomainConfig(
+      resetKind = BOOT
+    )
+  )
+
+  val resetCtrl = new ClockingArea(resetCtrlClockDomain) {
+    val coreResetUnbuffered = False
+
+    // reset after 64 cycles
+    val resetCounter = Reg(UInt(6 bits)) init(0)
+    when(resetCounter =/= U(resetCounter.range -> true)){
+      resetCounter := resetCounter + 1
+      coreResetUnbuffered := True
+    }
+
+    val coreReset = RegNext(coreResetUnbuffered)
+  }
+
+  val coreClockDomain = ClockDomain(
+    clock = io.clk,
+    reset = resetCtrl.coreReset
+  )
 
   val rgbaDriverConfig = SB_RGBA_DRV_Config(
     currentMode = "0b1",
@@ -25,7 +52,7 @@ case class SpiSlaveRGBA(config: SpiSlaveRGBAConfig) extends Component {
   )
   val rgbaDriver = SB_RGBA_DRV(rgbaDriverConfig)
 
-  val core = new Area {
+  val core = new ClockingArea(coreClockDomain) {
     val rgbState = Reg(Bits(3 bits)) init(0)
 
     val spiCtrl = new SpiSlaveCtrl(SpiSlaveCtrlGenerics(config.dataWidth))
