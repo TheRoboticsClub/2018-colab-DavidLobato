@@ -241,32 +241,31 @@ int main(int argc, char **argv)
 	set_gpio(1, 1);
 	usleep(100000);
 
-	//read lines and process hex bytes
+	//read lines and send hex bytes
 	while (-1 != (read = getline(&line, &len, stdin))) {
-        //fprintf(stderr, "Retrieved line of length %zu :\n", read);
-        //fprintf(stderr, "%s", line);
-
 		size_t idx = 0;
 		int pos;
 		uint8_t data;
+
+		if (read < 2) //read includes \n
+			continue;
 
 		//assert SS
 		set_gpio(0, 1);
 		usleep(2000);
 
-		while(idx < (read-2)) { //read includes \n
+		do {
 			if (1 != sscanf(line+idx, "%"SCNx8"%n", &data, &pos)) {
     			fprintf(stderr, "error reading at index %zu: %s", idx, line);
 				exit(EXIT_FAILURE);
 			}
-			//fprintf(stderr, "read: 0x%"PRIx8"\n", data);
 			idx += pos;
 
 			xfer_spi(&data, 1);
 			fprintf(stdout, "%"PRIx8, data);
 			if (idx < (read-2))
 				fprintf(stdout," ");
-		}
+		} while(idx < (read-2)); //read includes \n
 		fprintf(stdout,"\n");
 
 		//deassert SS

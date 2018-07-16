@@ -13,11 +13,11 @@ case class SpiSlaveDevice(config: SpiSlaveDeviceConfig) extends Component {
     val spi = master(SpiSlave())
 
     //Peripherals IO
-    val out0, out1, out2 = out Bool()
+    val output = out Bits(8 bits)
   }
 
   val coreCtrl = new Area {
-    val outState = Reg(Bits(3 bits)) init(0)
+    val outputState = Reg(Bits(io.output.getWidth bits)) init(0)
 
     val spiCtrl = new SpiSlaveCtrl(SpiSlaveCtrlGenerics(config.dataWidth))
     spiCtrl.io.kind.cpha := Bool(config.mode == 1 || config.mode == 3)
@@ -25,17 +25,15 @@ case class SpiSlaveDevice(config: SpiSlaveDeviceConfig) extends Component {
 
     //tx logic
     spiCtrl.io.tx.valid := True
-    spiCtrl.io.tx.payload := outState.resized
+    spiCtrl.io.tx.payload := outputState.resized
 
     //rx logic
     when(spiCtrl.io.rx.fire) {
-      outState := spiCtrl.io.rx.payload.resized
+      outputState := spiCtrl.io.rx.payload.resized
     }
   }
 
-  io.out0 := coreCtrl.outState(0)
-  io.out1 := coreCtrl.outState(1)
-  io.out2 := coreCtrl.outState(2)
+  io.output := coreCtrl.outputState
 
   io.spi <> coreCtrl.spiCtrl.io.spi
 }

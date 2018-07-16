@@ -1,24 +1,21 @@
 package examples.blinkred
 
-import examples.sbrgbadrv.{SB_RGBA_DRV_Config, SB_RGBA_DRV}
+import examples.sbrgbadrv.{SB_RGBA_DRV, SB_RGBA_DRV_Config}
 import spinal.core._
+import spinal.lib.Timeout
 
-case class BlinkRed(timerWidth: Int = 23) extends Component{
+case class BlinkRed(period: TimeNumber = 0.1 sec) extends Component{
   val io = new Bundle{
     val rgb0,rgb1,rgb2 = out Bool()
   }
 
-  val timer = new Area {
-    val counter = Reg(UInt(timerWidth bits))
-    val tick = counter === 0
-    counter := counter - 1
-    when(tick) {
-      counter := 6000000 //500ms @ 12MHz
-    }
+  val timeout = Timeout(period)
+  when(timeout) {
+    timeout.clear()
   }
 
   val state = Reg(Bool)
-  when(timer.tick) {
+  when(timeout) {
     state := !state
   }
 
@@ -32,9 +29,9 @@ case class BlinkRed(timerWidth: Int = 23) extends Component{
 
   rgbaDriver.io.CURREN := True
   rgbaDriver.io.RGBLEDEN := True
-  rgbaDriver.io.RGB0PWM := state
+  rgbaDriver.io.RGB0PWM := False
   rgbaDriver.io.RGB1PWM := False
-  rgbaDriver.io.RGB2PWM := False
+  rgbaDriver.io.RGB2PWM := state
   rgbaDriver.io.RGB0 <> io.rgb0
   rgbaDriver.io.RGB1 <> io.rgb1
   rgbaDriver.io.RGB2 <> io.rgb2
@@ -45,6 +42,12 @@ case class BlinkRed(timerWidth: Int = 23) extends Component{
 object BlinkRed {
   def main(args: Array[String]) {
     val outRtlDir = if (!args.isEmpty) args(0) else  "rtl"
-    SpinalConfig(targetDirectory = outRtlDir).generateVerilog(BlinkRed())
+    SpinalConfig(
+      targetDirectory = outRtlDir,
+      defaultClockDomainFrequency = FixedFrequency(12 MHz),
+      defaultConfigForClockDomains = ClockDomainConfig(
+        resetKind = BOOT
+      )
+    ).generateVerilog(BlinkRed())
   }
 }

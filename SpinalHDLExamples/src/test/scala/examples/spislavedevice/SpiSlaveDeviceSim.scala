@@ -44,30 +44,20 @@ object SpiSlaveDeviceSim {
       val task1 = readByte(0x00)
       sendByte(0x00)
       task1.join()
-
-      assert(!dut.io.out0.toBoolean)
-      assert(!dut.io.out1.toBoolean)
-      assert(!dut.io.out2.toBoolean)
+      assert(dut.io.output.toInt == 0x00)
 
       val task2 = readByte(0x00)
       sendByte(0x01)
       task2.join()
-
-      assert(dut.io.out0.toBoolean)
-      assert(!dut.io.out1.toBoolean)
-      assert(!dut.io.out2.toBoolean)
+      assert(dut.io.output.toInt == 0x01)
 
       val task3 = readByte(0x01)
       sendByte(0x00)
 
       task3.join()
-      assert(!dut.io.out0.toBoolean)
-      assert(!dut.io.out1.toBoolean)
-      assert(!dut.io.out2.toBoolean)
+      assert(dut.io.output.toInt == 0x00)
 
       dut.io.spi.ss #= true
-
-
     }
   }
 }

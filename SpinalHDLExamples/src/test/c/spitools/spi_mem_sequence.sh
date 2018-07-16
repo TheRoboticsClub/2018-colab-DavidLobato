@@ -2,6 +2,7 @@
 
 if [[ $# -ne 1 || !($1 =~ ^[0-9]+$) || $1 -lt 1 ]]; then
     echo "Argument must be a number between 1..1024"
+    exit 1
 fi
 
 bytes=$1
