@@ -11,6 +11,7 @@ ARACHNE_ARGS =
 ICEPACK = icepack
 ICETIME = icetime
 ICEPROG = iceprog
+ICEPROG_ARGS ?=
 
 all: $(TOP).bin
 
@@ -32,7 +33,7 @@ all: $(TOP).bin
 time: $(TOP).rpt
 
 prog: $(TOP).bin
-	$(ICEPROG) -S $<
+	$(ICEPROG) $(ICEPROG_ARGS) -S $<
 
 clean:
 	rm -f *.blif *.asc *.rpt *.bin *.v
