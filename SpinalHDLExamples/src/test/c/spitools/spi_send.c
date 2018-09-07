@@ -28,6 +28,7 @@
 #define _GNU_SOURCE
 
 #include <ftdi.h>
+#include <libusb.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -167,11 +168,19 @@ static void usage()
 int main(int argc, char **argv)
 {
     const char *devstr = NULL;
+    struct ftdi_device_list *device_list;
     enum ftdi_interface ifnum = INTERFACE_A;
 	char *line = NULL;
     size_t len = 0;
     ssize_t read;
+    int ret;
     
+
+    if (argc > 1) { //if present use it as devstr
+        devstr = argv[1];
+        fprintf(stderr, "Using device: %s\n", devstr);
+    }
+
     // ---------------------------------------------------------
 	// Initialize USB connection to FT2232H
 	// ---------------------------------------------------------
@@ -179,16 +188,48 @@ int main(int argc, char **argv)
 	fprintf(stderr, "init..\n");
 
 	ftdi_init(&ftdic);
+	if ((ret = ftdi_usb_find_all(&ftdic, &device_list, 0, 0)) < 0) {
+	    fprintf(stderr, "Can't find FTDI USB devices: %d (%s)\n", ret, ftdi_get_error_string(&ftdic));
+	    error(2);
+	}
+
+	fprintf(stderr, "Number of FTDI devices found: %d\n", ret);
+
+	int i;
+	struct ftdi_device_list * current_dev;
+	for(i = 0, current_dev = device_list; current_dev != NULL; i++,current_dev = current_dev->next) {
+		char manufacturer[128], description[128], serial[128] = "N/A";
+		struct libusb_device_descriptor desc = {0};
+
+	    fprintf(stderr, "Checking device: %d\n", i);
+		if ((ret = libusb_get_device_descriptor(current_dev->dev, &desc))) {
+			fprintf(stderr, "libusb_get_device_descriptor failed: %d (%s)\n", ret, libusb_strerror(ret));
+			error(2);
+		}
+
+	    if((ret = ftdi_usb_get_strings(&ftdic, current_dev->dev, 
+										manufacturer, 128, 
+										description, 128, 
+										desc.iSerialNumber ? serial : NULL, 128)) < 0) {
+	        fprintf(stderr, "ftdi_usb_get_strings failed: %d (%s)\n", ret, ftdi_get_error_string(&ftdic));
+			error(2);
+	    }
+	    fprintf(stderr, "Manufacturer: %s, Description: %s, Serial: %s\n", manufacturer, description, serial);
+		fprintf(stderr, "Vendor: 0x%04"PRIx16", Product: 0x%04"PRIx16"\n", desc.idVendor, desc.idProduct);
+		fprintf(stderr, "Bus: %d, Address: %d\n", libusb_get_bus_number(current_dev->dev), libusb_get_device_address(current_dev->dev));
+	}
+    ftdi_list_free(&device_list);
+
 	ftdi_set_interface(&ftdic, ifnum);
 
     if (devstr != NULL) {
 		if (ftdi_usb_open_string(&ftdic, devstr)) {
-			fprintf(stderr, "Can't find iCE FTDI USB device (device string %s).\n", devstr);
+			fprintf(stderr, "Can't find FTDI USB device (device string %s).\n", devstr);
 			error(2);
 		}
 	} else {
 		if (ftdi_usb_open(&ftdic, 0x0403, 0x6010) && ftdi_usb_open(&ftdic, 0x0403, 0x6014)) {
-			fprintf(stderr, "Can't find iCE FTDI USB device (vendor_id 0x0403, device_id 0x6010 or 0x6014).\n");
+			fprintf(stderr, "Can't find FTDI USB device (vendor_id 0x0403, device_id 0x6010 or 0x6014).\n");
 			error(2);
 		}
 	}
@@ -196,12 +237,12 @@ int main(int argc, char **argv)
 	ftdic_open = true;
 
     if (ftdi_usb_reset(&ftdic)) {
-		fprintf(stderr, "Failed to reset iCE FTDI USB device.\n");
+		fprintf(stderr, "Failed to reset FTDI USB device.\n");
 		error(2);
 	}
 
 	if (ftdi_usb_purge_buffers(&ftdic)) {
-		fprintf(stderr, "Failed to purge buffers on iCE FTDI USB device.\n");
+		fprintf(stderr, "Failed to purge buffers on FTDI USB device.\n");
 		error(2);
 	}
 
@@ -219,12 +260,12 @@ int main(int argc, char **argv)
 	ftdic_latency_set = true;
 
 	if (ftdi_set_bitmode(&ftdic, 0, BITMODE_RESET) < 0) {
-		fprintf(stderr, "Failed to set BITMODE_RESET on iCE FTDI USB device.\n");
+		fprintf(stderr, "Failed to set BITMODE_RESET on FTDI USB device.\n");
 		error(2);
 	}
 
 	if (ftdi_set_bitmode(&ftdic, 0, BITMODE_MPSSE) < 0) {
-		fprintf(stderr, "Failed to set BITMODE_RESET on iCE FTDI USB device.\n");
+		fprintf(stderr, "Failed to set BITMODE_RESET on FTDI USB device.\n");
 		error(2);
 	}
 
@@ -235,8 +276,6 @@ int main(int argc, char **argv)
 	send_byte(0x86);
 	send_byte(0x03);
 	send_byte(0x00);
-
-    fprintf(stderr, "cdone: %s\n", get_cdone() ? "high" : "low");
 
 	set_gpio(1, 1);
 	usleep(100000);

@@ -1,3 +1,4 @@
 *.o
 spi_send
 .vscode
+*.code-workspace
