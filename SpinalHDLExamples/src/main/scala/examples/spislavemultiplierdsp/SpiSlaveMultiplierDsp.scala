@@ -10,7 +10,7 @@ import spinal.lib.io.InOutWrapper
 case class SpiSlaveMultiplierDspConfig(dataWidth : Int = 8, mode: Int = 0)
 
 object SpiSlaveMultiplierDspState extends SpinalEnum {
-  val OPERAND1, OPERAND2, RESULTL, RESULTH = newElement()
+  val OPERAND1, OPERAND2, RESULTH, RESULTL = newElement()
 }
 
 case class SpiSlaveMultiplierDsp(config: SpiSlaveMultiplierDspConfig) extends Component {
@@ -19,9 +19,10 @@ case class SpiSlaveMultiplierDsp(config: SpiSlaveMultiplierDspConfig) extends Co
   }
 
   val coreCtrl = new Area {
+    val op1 = Reg(UInt(config.dataWidth bits)) init(0)
+    val op2 = Reg(UInt(config.dataWidth bits)) init(0)
+    val result = UInt(config.dataWidth*2 bits)
     val mac16 = SB_MAC16(SB_MAC16_Config(
-      aReg = true,
-      bReg = true,
       topOutputSelect = OutputSelectEnum.MUL_8x8,
       bottomOutputSelect = OutputSelectEnum.MUL_8x8,
       mode8x8 = true
@@ -31,12 +32,12 @@ case class SpiSlaveMultiplierDsp(config: SpiSlaveMultiplierDspConfig) extends Co
     mac16.io.CE := True
 
     mac16.io.C := 0
-    mac16.io.A := 0
-    mac16.io.B := 0
+    mac16.io.A := op1.asBits.resized
+    mac16.io.B := op2.asBits.resized
     mac16.io.D := 0
 
-    mac16.io.AHOLD := True
-    mac16.io.BHOLD := True
+    mac16.io.AHOLD := False
+    mac16.io.BHOLD := False
     mac16.io.CHOLD := False
     mac16.io.DHOLD := False
 
@@ -55,6 +56,8 @@ case class SpiSlaveMultiplierDsp(config: SpiSlaveMultiplierDspConfig) extends Co
     mac16.io.ACCUMCI := False
     mac16.io.SIGNEXTIN := False
 
+    result := mac16.io.O.asUInt.resized
+
     val txData = Bits(config.dataWidth bits)
 
     val spiCtrl = new SpiSlaveCtrl(SpiSlaveCtrlGenerics(config.dataWidth))
@@ -66,31 +69,32 @@ case class SpiSlaveMultiplierDsp(config: SpiSlaveMultiplierDspConfig) extends Co
 
       val state = RegInit(OPERAND1)
 
-
       txData := B(0)
 
       switch(state) {
         is(OPERAND1) {
           when(spiCtrl.io.rx.fire) {
-            mac16.io.A := spiCtrl.io.rx.payload.resized
-            mac16.io.AHOLD := False //load
+            op1 := spiCtrl.io.rx.payload.asUInt
             state := OPERAND2
           }
         }
         is(OPERAND2) {
           when(spiCtrl.io.rx.fire) {
-            mac16.io.B := spiCtrl.io.rx.payload.resized
-            mac16.io.BHOLD := False //load
-            state := RESULTL
+            op2 := spiCtrl.io.rx.payload.asUInt
+            state := RESULTH
           }
         }
         is(RESULTH) {
-          txData := mac16.io.O.subdivideIn(config.dataWidth bits)(1)
-          state := RESULTL
+          txData := result.asBits.subdivideIn(config.dataWidth bits)(1)
+          when(spiCtrl.io.rx.fire) {
+            state := RESULTL
+          }
         }
         is(RESULTL) {
-          txData := mac16.io.O.subdivideIn(config.dataWidth bits)(0)
-          state := OPERAND1
+          txData := result.asBits.subdivideIn(config.dataWidth bits)(0)
+          when(spiCtrl.io.rx.fire) {
+            state := OPERAND1
+          }
         }
       }
 
@@ -117,6 +121,6 @@ object SpiSlaveMultiplierDsp {
       defaultConfigForClockDomains = ClockDomainConfig(
         resetKind = BOOT
       )
-    ).generateVerilog(InOutWrapper(SpiSlaveMultiplierDsp(SpiSlaveMultiplierDspConfig()))).printPruned()
+    ).generateVerilog(InOutWrapper(SpiSlaveMultiplierDsp(SpiSlaveMultiplierDspConfig())))
   }
 }

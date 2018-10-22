@@ -6,7 +6,7 @@ import spinal.lib.com.spi.{SpiSlave, SpiSlaveCtrl, SpiSlaveCtrlGenerics}
 import spinal.lib.io.InOutWrapper
 
 // mode: 0 => [cpol = 0, cpha = 0], 1 => [cpol = 0, cpha = 1], 2 => [cpol = 1, cpha = 0], 3 => [cpol = 1, cpha = 1]
-case class SpiSlaveMemConfig(dataWidth : Int = 8, mode: Int = 0, memWordCount: Int) {
+case class SpiSlaveMemConfig(dataWidth : Int = 8, mode: Int = 0, memWordCount: Int, initRam: Boolean = false) {
   val addressWidth = log2Up(memWordCount)
   assert(addressWidth < (dataWidth*2), "max memWordCount=32768")
   assert(isPow2(memWordCount), "memWordCount must be a power of 2")
@@ -49,7 +49,9 @@ case class SpiSlaveMem(config: SpiSlaveMemConfig) extends Component {
   )
 
   val core = new ClockingArea(coreClockDomain) {
-    val mem = Mem(initialContent = for(idx <- 0 until config.memWordCount) yield { B(0xFF, 8 bits) })
+    val mem =
+      if (config.initRam) Mem(initialContent = for(idx <- 0 until config.memWordCount) yield { B(config.dataWidth bits, default -> true) }) //init word all bits 1
+      else Mem(Bits(config.dataWidth bits), config.memWordCount)
     val op = Reg(Bool) init(False) // 0 -> READ, 1 -> WRITE
     val enable = Bool
     val writeEnable = Bool
@@ -124,6 +126,18 @@ object SpiSlaveMem {
   def main(args: Array[String]) {
     val outRtlDir = if (!args.isEmpty) args(0) else  "rtl"
     SpinalConfig(targetDirectory = outRtlDir)
-      .generateVerilog(InOutWrapper(SpiSlaveMem(SpiSlaveMemConfig(memWordCount = 1024))))
+      .generateVerilog(InOutWrapper(SpiSlaveMem(SpiSlaveMemConfig(memWordCount = 1024, initRam = true))))
+  }
+}
+
+object SpiSlaveMemSPRAM {
+  def main(args: Array[String]) {
+    val outRtlDir = if (!args.isEmpty) args(0) else  "rtl"
+    SpinalConfig(targetDirectory = outRtlDir)
+      .generateVerilog({
+        val toplevel = SpiSlaveMem(SpiSlaveMemConfig(memWordCount = 1024))
+        toplevel.core.mem.generateAsBlackBox()
+        InOutWrapper(toplevel)
+      })
   }
 }

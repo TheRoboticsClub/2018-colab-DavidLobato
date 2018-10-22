@@ -35,6 +35,7 @@ bin/
 *.vcd
 !tester/src/test/resources/*.vhd
 
+build.sbt.local
 rtl/
 simWorkspace/
 tmp/

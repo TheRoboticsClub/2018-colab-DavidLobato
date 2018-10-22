@@ -1,3 +1,5 @@
+`timescale 1ps / 1ps
+
 //mockup for simulation
 //blackbox from yosys techlibs/ice40/cells_sim.v
 module SB_MAC16 (
