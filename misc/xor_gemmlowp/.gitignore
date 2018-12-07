@@ -1,0 +1,4 @@
+.vscode
+*.o
+xor_mlp_inference_float
+xor_mlp_inference_quantized
