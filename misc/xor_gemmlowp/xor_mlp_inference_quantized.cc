@@ -184,8 +184,6 @@ void QuantizedFullyConnected(
     const gemmlowp::MatrixMap<const uint8_t, kOrder>& input, int32_t input_zero_point,
     const gemmlowp::MatrixMap<const uint8_t, kOrder>& weights, int32_t weights_zero_point,
     const gemmlowp::MatrixMap<const int32_t, kOrder>& bias,
-    int32_t output_min,
-    int32_t output_max,
     int32_t output_multiplier,
     int output_shift,
     gemmlowp::MatrixMap<uint8_t, kOrder>* result, int32_t result_zero_point) {
@@ -226,8 +224,8 @@ void QuantizedFullyConnected(
       accum = MultiplyByQuantizedMultiplierSmallerThanOne(accum, output_multiplier, output_shift);
       accum += result_zero_point;
 
-      accum = std::max(accum, output_min);
-      accum = std::min(accum, output_max);
+      //saturating cast
+      accum = std::max(std::min(accum, 255), 0);
 
       (*result)(i, k) = static_cast<uint8_t>(accum);
     }
@@ -392,7 +390,7 @@ int main(int argc, char* argv[]) {
   QuantizedFullyConnected(
       input_uint8.ConstMap(), input_qparams.zero_point,
       dense_weights_uint8.ConstMap(), dense_weights_qparams.zero_point,
-      dense_bias_int32.ConstMap(), 0, INT32_MAX, dense_quantized_multiplier,
+      dense_bias_int32.ConstMap(), dense_quantized_multiplier,
       dense_right_shift, &activation_layer0_uint8_map, dense_act_qparams.zero_point);
 
   // //layer 1 activation (output)
@@ -403,7 +401,7 @@ int main(int argc, char* argv[]) {
   QuantizedFullyConnected(
       activation_layer0_uint8.ConstMap(), dense_act_qparams.zero_point,
       dense_1_weights_uint8.ConstMap(), dense_1_weights_qparams.zero_point,
-      dense_1_bias_int32.ConstMap(), 0, INT32_MAX, dense_1_quantized_multiplier,
+      dense_1_bias_int32.ConstMap(), dense_1_quantized_multiplier,
       dense_1_right_shift, &activation_layer1_uint8_map, dense_1_act_qparams.zero_point);
 
 
