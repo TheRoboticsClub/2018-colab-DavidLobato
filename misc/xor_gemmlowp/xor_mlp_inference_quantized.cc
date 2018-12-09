@@ -193,15 +193,35 @@ void QuantizedFullyConnected(
   assert(input.rows() == result->rows());
   assert(weights.cols() == bias.cols());
   assert(weights.cols() == result->cols());
+
+  // this is done in pack see gemmlowp/docs/low-precision.md
+  // calculate sum of rows of input
+  std::vector<int32_t> sums_of_rows_input(input.rows());
+  for (int i = 0; i < input.rows(); ++i) {
+    for (int j = 0; j < input.cols(); ++j) {
+      sums_of_rows_input[i] += input(i,j);
+    }
+  }
+
+  // calculate sum of cols of weights
+  std::vector<int32_t> sums_of_cols_weights(weights.cols());
+  for (int j = 0; j < weights.cols(); ++j) {
+    for (int i = 0; i < weights.rows(); ++i) {
+      sums_of_cols_weights[j] += weights(i,j);
+    }
+  }
+
   for (int i = 0; i < input.rows(); i++) {
     for (int k = 0; k < weights.cols(); k++) {
-      int32_t accum = 0;
+      int32_t accum = bias(0, k);
 
       for (int j = 0; j < input.cols(); j++) {
-        accum += (input(i, j) - input_zero_point) * (weights(j, k) - weights_zero_point);
+        accum += input(i,j) * weights(j,k);
       }
 
-      accum += bias(0, k);
+      accum += input.cols() * input_zero_point * weights_zero_point;
+      accum -= input_zero_point * sums_of_cols_weights[k];
+      accum -= weights_zero_point * sums_of_rows_input[i]; 
 
       accum = MultiplyByQuantizedMultiplierSmallerThanOne(accum, output_multiplier, output_shift);
       accum += result_zero_point;
@@ -363,35 +383,6 @@ int main(int argc, char* argv[]) {
       &dense_1_quantized_multiplier, &dense_1_right_shift);
 
   std::cout << "End of OFFLINE QUANTIZATION CODE.\n" << std::endl;
-
-  // TODO: is efficient zero_point handling needed on HW??
-  // // do packing: 'Packed' means that it is laid out in the storage order
-  // gemmlowp::SideMap<uint8_t, gemmlowp::SideMapOrder::WidthMajor>
-  //     input_uint8_packed(input_uint8.Map().data(), input_uint8.Map().rows(),
-  //                        input_uint8.Map().cols(), input_uint8.Map().stride());
-  // gemmlowp::SideMap<uint8_t, gemmlowp::SideMapOrder::DepthMajor>
-  //     dense_weights_uint8_packed(
-  //         dense_weights_uint8.Map().data(), dense_weights_uint8.Map().cols(),
-  //         dense_weights_uint8.Map().rows(), dense_weights_uint8.Map().stride());
-  // // calculate sum of rows on input_uint8
-  // std::vector<int32_t> sums_of_each_slice_input(input_rows);
-  // for (int w = 0; w < input_uint8_packed.width(); ++w) {
-  //   for (int d = 0; d < input_uint8_packed.depth(); ++d) {
-  //     sums_of_each_slice_input[w] += input_uint8_packed(w, d);
-  //   }
-  //   std::cout << "sums_of_each_slice_input[" << w
-  //             << "]=" << sums_of_each_slice_input[w] << std::endl;
-  // }
-
-  // // calculate sum of cols on rhs
-  // std::vector<int32_t> sums_of_each_slice_dense_weights(dense_weights_cols);
-  // for (int w = 0; w < dense_weights_uint8_packed.width(); ++w) {
-  //   for (int d = 0; d < dense_weights_uint8_packed.depth(); ++d) {
-  //     sums_of_each_slice_dense_weights[w] += dense_weights_uint8_packed(w, d);
-  //   }
-  //   std::cout << "sums_of_each_slice_dense_weights[" << w
-  //             << "]=" << sums_of_each_slice_dense_weights[w] << std::endl;
-  // }
 
   // //layer 0 activation
   MatrixWithStorage<float, kOrder> activation_layer0(input_rows,
