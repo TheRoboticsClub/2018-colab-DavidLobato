@@ -1,4 +1,4 @@
-package examples.sbmac16
+package examples.blackbox.lattice.ice40
 
 import spinal.core._
 
@@ -48,67 +48,62 @@ case class SB_MAC16_Config(negTrigger: Boolean = false,
                            bSigned: Boolean = false)
 
 case class SB_MAC16(config: SB_MAC16_Config) extends BlackBox {
-  val generic = new Generic {
-    val NEG_TRIGGER = Bool(config.negTrigger)
-    val C_REG = Bool(config.cReg)
-    val A_REG = Bool(config.aReg)
-    val B_REG = Bool(config.bReg)
-    val D_REG = Bool(config.dReg)
-    val TOP_8x8_MULT_REG = Bool(config.top8x8MultReg)
-    val BOT_8x8_MULT_REG = Bool(config.bottom8x8MultReg)
-    val PIPELINE_16x16_MULT_REG1 = Bool(config.pipeline16x16MultReg1)
-    val PIPELINE_16x16_MULT_REG2 = Bool(config.pipeline16x16MultReg2)
-    val TOPOUTPUT_SELECT = B(config.topOutputSelect.id, 2 bits)
-    val TOPADDSUB_LOWERINPUT = B(config.topAddSubLowerInput.id, 2 bits)
-    val TOPADDSUB_UPPERINPUT = B(config.topAddSubUpperInput.id, 1 bits)
-    val TOPADDSUB_CARRYSELECT = B(config.topAddSubCarrySelect.id, 2 bits)
-    val BOTOUTPUT_SELECT = B(config.bottomOutputSelect.id, 2 bits)
-    val BOTADDSUB_LOWERINPUT = B(config.bottomAddSubLowerInput.id, 2 bits)
-    val BOTADDSUB_UPPERINPUT = B(config.bottomAddSubUpperInput.id, 1 bits)
-    val BOTADDSUB_CARRYSELECT = B(config.bottomAddSubCarrySelect.id, 2 bits)
-    val MODE_8x8 = Bool(config.mode8x8)
-    val A_SIGNED = Bool(config.aSigned)
-    val B_SIGNED = Bool(config.bSigned)
-  }
+  addGeneric("NEG_TRIGGER", Bool(config.negTrigger))
+  addGeneric("C_REG", Bool(config.cReg))
+  addGeneric("A_REG", Bool(config.aReg))
+  addGeneric("B_REG", Bool(config.bReg))
+  addGeneric("D_REG", Bool(config.dReg))
+  addGeneric("TOP_8x8_MULT_REG", Bool(config.top8x8MultReg))
+  addGeneric("BOT_8x8_MULT_REG", Bool(config.bottom8x8MultReg))
+  addGeneric("PIPELINE_16x16_MULT_REG1", Bool(config.pipeline16x16MultReg1))
+  addGeneric("PIPELINE_16x16_MULT_REG2", Bool(config.pipeline16x16MultReg2))
+  addGeneric("TOPOUTPUT_SELECT", spinal.core.B(config.topOutputSelect.id, 2 bits))
+  addGeneric("TOPADDSUB_LOWERINPUT", spinal.core.B(config.topAddSubLowerInput.id, 2 bits))
+  addGeneric("TOPADDSUB_UPPERINPUT", spinal.core.B(config.topAddSubUpperInput.id, 1 bits))
+  addGeneric("TOPADDSUB_CARRYSELECT", spinal.core.B(config.topAddSubCarrySelect.id, 2 bits))
+  addGeneric("BOTOUTPUT_SELECT", spinal.core.B(config.bottomOutputSelect.id, 2 bits))
+  addGeneric("BOTADDSUB_LOWERINPUT", spinal.core.B(config.bottomAddSubLowerInput.id, 2 bits))
+  addGeneric("BOTADDSUB_UPPERINPUT", spinal.core.B(config.bottomAddSubUpperInput.id, 1 bits))
+  addGeneric("BOTADDSUB_CARRYSELECT", spinal.core.B(config.bottomAddSubCarrySelect.id, 2 bits))
+  addGeneric("MODE_8x8", Bool(config.mode8x8))
+  addGeneric("A_SIGNED", Bool(config.aSigned))
+  addGeneric("B_SIGNED", Bool(config.bSigned))
 
-  val io = new Bundle {
-    val CLK = in Bool
-    val CE = in Bool
+  val CLK = in Bool()
+  val CE = in Bool()
 
-    val C = in Bits(16 bits)
-    val A = in Bits(16 bits)
-    val B = in Bits(16 bits)
-    val D = in Bits(16 bits)
+  val C = in Bits(16 bits)
+  val A = in Bits(16 bits)
+  val B = in Bits(16 bits)
+  val D = in Bits(16 bits)
 
-    val CHOLD = in Bool
-    val AHOLD = in Bool
-    val BHOLD = in Bool
-    val DHOLD = in Bool
+  val CHOLD = in Bool()
+  val AHOLD = in Bool()
+  val BHOLD = in Bool()
+  val DHOLD = in Bool()
 
-    val IRSTTOP = in Bool
-    val IRSTBOT = in Bool
-    val ORSTTOP = in Bool
-    val ORSTBOT = in Bool
+  val IRSTTOP = in Bool()
+  val IRSTBOT = in Bool()
+  val ORSTTOP = in Bool()
+  val ORSTBOT = in Bool()
 
-    val OLOADTOP = in Bool
-    val OLOADBOT = in Bool
-    val ADDSUBTOP = in Bool
-    val ADDSUBBOT = in Bool
-    val OHOLDTOP = in Bool
-    val OHOLDBOT = in Bool
-    val CI = in Bool
-    val ACCUMCI = in Bool
-    val SIGNEXTIN = in Bool
+  val OLOADTOP = in Bool()
+  val OLOADBOT = in Bool()
+  val ADDSUBTOP = in Bool()
+  val ADDSUBBOT = in Bool()
+  val OHOLDTOP = in Bool()
+  val OHOLDBOT = in Bool()
+  val CI = in Bool()
+  val ACCUMCI = in Bool()
+  val SIGNEXTIN = in Bool()
 
-    val O = out Bits(32 bits)
-    val CO = out Bool
-    val ACCUMCO = out Bool
-    val SIGNEXTOUT = out Bool
-  }
+  val O = out Bits(32 bits)
+  val CO = out Bool()
+  val ACCUMCO = out Bool()
+  val SIGNEXTOUT = out Bool()
 
-  // Remove io_ prefix
-  noIoPrefix()
+  mapCurrentClockDomain(CLK, null, CE)
 
-  addRTLPath("src/main/resources/sbmac16/SB_MAC16.v") //verilator mockup
-  addRTLPath("src/main/resources/sbmac16/MAC16_SIM.v") //from radiant cae library. I can't distribute this file.
+  addRTLPath("src/main/resources/blackbox/lattice/ice40/SB_MAC16.v") //verilator mockup
+  addRTLPath("src/main/resources/blackbox/lattice/ice40/MAC16_SIM.v") //from radiant cae library. I can't distribute this file.
 }

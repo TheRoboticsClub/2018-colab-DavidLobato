@@ -1,6 +1,6 @@
 package examples.blinkred
 
-import examples.sbrgbadrv.{SB_RGBA_DRV, SB_RGBA_DRV_Config}
+import examples.blackbox.lattice.ice40._
 import spinal.core._
 import spinal.lib.Timeout
 
@@ -27,14 +27,14 @@ case class BlinkRed(period: TimeNumber = 0.1 sec) extends Component{
   )
   val rgbaDriver = SB_RGBA_DRV(rgbaDriverConfig)
 
-  rgbaDriver.io.CURREN := True
-  rgbaDriver.io.RGBLEDEN := True
-  rgbaDriver.io.RGB0PWM := False
-  rgbaDriver.io.RGB1PWM := False
-  rgbaDriver.io.RGB2PWM := state
-  rgbaDriver.io.RGB0 <> io.rgb0
-  rgbaDriver.io.RGB1 <> io.rgb1
-  rgbaDriver.io.RGB2 <> io.rgb2
+  rgbaDriver.CURREN := True
+  rgbaDriver.RGBLEDEN := True
+  rgbaDriver.RGB0PWM := False
+  rgbaDriver.RGB1PWM := False
+  rgbaDriver.RGB2PWM := state
+  rgbaDriver.RGB0 <> io.rgb0
+  rgbaDriver.RGB1 <> io.rgb1
+  rgbaDriver.RGB2 <> io.rgb2
 
   noIoPrefix()
 }

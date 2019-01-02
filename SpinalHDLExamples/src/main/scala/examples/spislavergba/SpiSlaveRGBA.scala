@@ -1,6 +1,6 @@
 package examples.spislavergba
 
-import examples.sbrgbadrv.{SB_RGBA_DRV, SB_RGBA_DRV_Config}
+import examples.blackbox.lattice.ice40._
 import spinal.core._
 import spinal.lib._
 import spinal.lib.com.spi.{SpiSlave, SpiSlaveCtrl, SpiSlaveCtrlGenerics}
@@ -69,15 +69,15 @@ case class SpiSlaveRGBA(config: SpiSlaveRGBAConfig) extends Component {
     }
   }
 
-  rgbaDriver.io.CURREN := core.rgbState.orR
-  rgbaDriver.io.RGBLEDEN := core.rgbState.orR
-  rgbaDriver.io.RGB0PWM := core.rgbState(0)
-  rgbaDriver.io.RGB1PWM := core.rgbState(1)
-  rgbaDriver.io.RGB2PWM := core.rgbState(2)
+  rgbaDriver.CURREN := core.rgbState.orR
+  rgbaDriver.RGBLEDEN := core.rgbState.orR
+  rgbaDriver.RGB0PWM := core.rgbState(0)
+  rgbaDriver.RGB1PWM := core.rgbState(1)
+  rgbaDriver.RGB2PWM := core.rgbState(2)
 
-  io.rgb0 <> rgbaDriver.io.RGB0
-  io.rgb1 <> rgbaDriver.io.RGB1
-  io.rgb2 <> rgbaDriver.io.RGB2
+  io.rgb0 <> rgbaDriver.RGB0
+  io.rgb1 <> rgbaDriver.RGB1
+  io.rgb2 <> rgbaDriver.RGB2
 
   io.spi <> core.spiCtrl.io.spi
 

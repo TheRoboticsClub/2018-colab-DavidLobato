@@ -1,4 +1,4 @@
-package examples.sbrgbadrv
+package examples.blackbox.lattice.ice40
 
 import spinal.core._
 
@@ -33,19 +33,14 @@ case class SB_RGBA_DRV(config: SB_RGBA_DRV_Config) extends BlackBox {
     val RGB2_CURRENT = config.rgb2Current
   }
 
-  val io = new Bundle {
-    val CURREN = in Bool
-    val RGBLEDEN = in Bool
-    val RGB0PWM = in Bool
-    val RGB1PWM = in Bool
-    val RGB2PWM = in Bool
-    val RGB0 = out Bool
-    val RGB1 = out Bool
-    val RGB2 = out Bool
-  }
+  val CURREN = in Bool
+  val RGBLEDEN = in Bool
+  val RGB0PWM = in Bool
+  val RGB1PWM = in Bool
+  val RGB2PWM = in Bool
+  val RGB0 = out Bool
+  val RGB1 = out Bool
+  val RGB2 = out Bool
 
-  // Remove io_ prefix
-  noIoPrefix()
-
-  addRTLPath("src/main/resources/sbrgbadrv/SB_RGBA_DRV.v") //verilator mockup
+  addRTLPath("src/main/resources/blackbox/lattice/ice40/SB_RGBA_DRV.v") //verilator mockup
 }

@@ -129,15 +129,3 @@ object SpiSlaveMem {
       .generateVerilog(InOutWrapper(SpiSlaveMem(SpiSlaveMemConfig(memWordCount = 1024, initRam = true))))
   }
 }
-
-object SpiSlaveMemSPRAM {
-  def main(args: Array[String]) {
-    val outRtlDir = if (!args.isEmpty) args(0) else  "rtl"
-    SpinalConfig(targetDirectory = outRtlDir)
-      .generateVerilog({
-        val toplevel = SpiSlaveMem(SpiSlaveMemConfig(memWordCount = 1024))
-        toplevel.core.mem.generateAsBlackBox()
-        InOutWrapper(toplevel)
-      })
-  }
-}
